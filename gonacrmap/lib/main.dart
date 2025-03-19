@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gonacrmap/presentation/pages/loginpage.dart';
+import 'package:gonacrmap/presentation/providers/formulario_provider.dart';
 import 'package:gonacrmap/presentation/providers/mapeo_precios_provider.dart';
 import 'package:provider/provider.dart';
 import 'presentation/providers/user_provider.dart';
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => MapeoPreciosProvider()),
+        ChangeNotifierProvider(create: (_) => FormularioProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
       ],
        child: MaterialApp(

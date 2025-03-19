@@ -1,13 +1,15 @@
 class Producto {
   final String nombreProducto;
-  final String marca;
-  final String categoria;
+  late final String marca;
+  late final String categoria;
   final String establecimiento;
-  final String zona;
-  final String region;
-  final String unidadMedida;
+  late final String zona;
+  late final String region;
+  final String unidad;
+  final String gramaje;
   final double precio;
   final DateTime fecha;
+  String foto;
 
   Producto({
     required this.nombreProducto,
@@ -16,9 +18,11 @@ class Producto {
     required this.establecimiento,
     required this.zona,
     required this.region,
-    required this.unidadMedida,
+    required this.unidad,
+    required this.gramaje,
     required this.precio,
     required this.fecha,
-    
+    required this.foto,
+
   });
 }

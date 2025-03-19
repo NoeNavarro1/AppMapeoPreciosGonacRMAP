@@ -1,320 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:gonacrmap/domain/entities/producto.dart';
-import 'package:gonacrmap/presentation/providers/mapeo_precios_provider.dart';
+import 'package:gonacrmap/data/models/producto_model.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:gonacrmap/data/datasources/mapeo_service.dart';
+import 'package:gonacrmap/data/datasources/formulario_service.dart';
+import 'package:gonacrmap/presentation/providers/formulario_provider.dart';
 import 'package:provider/provider.dart';
-
-class MapeoPrecio {
-  final String nombreProducto;
-  final double precio;
-  final String marca;
-  final String categoria;
-  final String establecimiento;
-  final String zona;
-  final String region;
-  final String unidadMedida;
-  final DateTime fecha;
-
-  MapeoPrecio({
-    required this.nombreProducto,
-    required this.precio,
-    required this.marca,
-    required this.categoria,
-    required this.establecimiento,
-    required this.zona,
-    required this.region,
-    required this.unidadMedida,
-    required this.fecha,
-  });
-}
+import 'package:logger/logger.dart';
 
 class FormDialog extends StatefulWidget {
-  final Dio dio;
-  const FormDialog({Key? key, required this.dio}) : super(key: key);
+  const FormDialog({
+    super.key,
+  });
 
   @override
   _FormDialogState createState() => _FormDialogState();
 }
 
-final ip = '192.168.1.72';
-
+//Funcion para obtener los valores de los controladores
 class _FormDialogState extends State<FormDialog> {
   final _formKey = GlobalKey<FormBuilderState>();
 
-  // Controladores de texto
-  final TextEditingController _establecimientoController =
-      TextEditingController();
-  final TextEditingController _zonaController = TextEditingController();
-  final TextEditingController _regionController = TextEditingController();
-  final TextEditingController _productoController = TextEditingController();
-  final TextEditingController _marcaController = TextEditingController();
-  final TextEditingController _categoriaController = TextEditingController();
-  final TextEditingController _precioController = TextEditingController();
+  //instancia de servicios
+  final MapeoService _mapeoService = MapeoService();
+  final FormularioService _formularioService = FormularioService();
+  final logger = Logger();
+  late FormularioProvider formularioProvider;
 
-  String? _marcaId;
-  String? _categoriaId;
-  String? _zonaId;
-  String? _regionId;
 
+////////////////////////////////////////////////
+  Future<void> _handleFormSubmission() async {
+    // Obtener el producto desde los controladores
+    ProductoModel producto = _formularioService.getProductoFromControllers(context);
+
+    // Ruta de la imagen (si es necesario)
+    String? imagePath =
+        _productImage?.path; // Cambia esto según tu implementación
+
+    // Llamar a submitForm con el producto y la imagen
+    bool result = await _formularioService.submitForm(context, producto, imagePath);
+
+    if (result) {
+      logger.i('Formulario Enviado Correctamente');
+    } else {
+      logger.e('Error al enviar el formulario');
+    }
+  }
+///////////////////////////////////////////////
+
+
+///////////////////////////////////////////////
   final ImagePicker _picker = ImagePicker();
   File? _productImage;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchProductos(String query) async {
-    try {
-      final response = await widget.dio.get(
-        "http://$ip:8000/api/ProductosCompetencia/",
-        queryParameters: {"search": query},
-      );
-      print(
-          "Respuesta de productos: ${response.data}"); // Para ver la respuesta
-      List<Map<String, dynamic>> productos =
-          List<Map<String, dynamic>>.from(response.data);
-      return productos.where((producto) {
-        return producto['nombre_producto']
-            .toLowerCase()
-            .contains(query.toLowerCase());
-      }).toList();
-    } catch (e) {
-      print("Error al obtener productos: $e");
-      debugPrint("Error al obtener productos: $e");
-      return [];
-    }
-  }
-
-  Future<String> _getMarcaNombre(String marcaId) async {
-    try {
-      final response =
-          await widget.dio.get("http://$ip:8000/api/Marcas/$marcaId/");
-      print("Respuesta de marca: ${response.data}"); // Para ver la respuesta
-      return response.data['nombre'] ?? '';
-    } catch (e) {
-      print("Error al obtener Marcas $e");
-      debugPrint("Error al obtener Marcas $e");
-      return '';
-    }
-  }
-
-  Future<String> _getCategoriaName(String categoriaId) async {
-    try {
-      final response =
-          await widget.dio.get('http://$ip:8000/api/Categorias/$categoriaId/');
-      print(
-          "Respuesta de categoria: ${response.data}"); // Para ver la respuesta
-      return response.data['nombre'] ?? '';
-    } catch (e) {
-      print("Error al obtener categorias: $e");
-      debugPrint("Error al obtener categorias: $e");
-      return '';
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchEstablecimientos(
-      String query) async {
-    try {
-      final response = await widget.dio.get(
-        "http://$ip:8000/api/ClientesLista/",
-        queryParameters: {"search": query},
-      );
-      print(
-          "Respuesta de establecimientos: ${response.data}"); // Para ver la respuesta
-      List<Map<String, dynamic>> establecimientos =
-          List<Map<String, dynamic>>.from(response.data);
-      return establecimientos.where((establishment) {
-        return establishment['nombre_cliente']
-            .toLowerCase()
-            .contains(query.toLowerCase());
-      }).toList();
-    } catch (e) {
-      print("Error al obtener establecimientos: $e");
-      debugPrint("Error al obtener establecimientos: $e");
-      return [];
-    }
-  }
-
-  Future<String> _getZonaName(String zonaId) async {
-    try {
-      final response =
-          await widget.dio.get("http://$ip:8000/api/Zona/$zonaId/");
-      print("Respuesta de zona: ${response.data}"); // Para ver la respuesta
-      return response.data['nombre'] ?? '';
-    } catch (e) {
-      print("Error al obtener zona: $e");
-      debugPrint("Error al obtener zona: $e");
-      return '';
-    }
-  }
-
-  Future<String> _getRegionName(String regionId) async {
-    try {
-      final response =
-          await widget.dio.get("http://$ip:8000/api/Region/$regionId/");
-      print("Respuesta de región: ${response.data}"); // Para ver la respuesta
-      return response.data['nombre'] ?? '';
-    } catch (e) {
-      print("Error al obtener región: $e");
-      debugPrint("Error al obtener región: $e");
-      return '';
-    }
-  }
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formData = Map<String, dynamic>.from(_formKey.currentState!.value);
-
-      // Validar que nombreProducto y unidadMedida no sean vacíos
-      final nombreProducto =
-          (formData['nombre_producto']?.toString() ?? "").trim().isEmpty
-              ? "Nombre no disponible"
-              : formData['nombre_producto'].toString();
-
-      final unidadMedida =
-          (formData['unidad_medida']?.toString() ?? "").trim().isEmpty
-              ? "Unidad no especificada"
-              : formData['unidad_medida'].toString();
-
-      final precio =
-          double.tryParse(formData['precio']?.toString() ?? "0.0") ?? 0.0;
-      final marca = formData['marca']?.toString() ?? "";
-      final categoria = formData['categoria']?.toString() ?? "";
-      final establecimiento = formData['establecimiento']?.toString() ?? "";
-      final zona = formData['zona']?.toString() ?? "";
-      final region = formData['region']?.toString() ?? "";
-
-      DateTime fecha = DateTime.now();
-      if (formData['fecha'] != null) {
-        DateTime fecha = formData['fecha'] is String
-            ? DateFormat('yyyy-MM-dd').parse(formData['fecha'])
-            : formData['fecha'];
-        formData['fecha'] = DateFormat('yyyy-MM-dd').format(fecha);
-      }
-
-      final producto = Producto(
-        nombreProducto: nombreProducto,
-        precio: precio,
-        marca: marca,
-        categoria: categoria,
-        establecimiento: establecimiento,
-        zona: zona,
-        region: region,
-        unidadMedida: unidadMedida,
-        fecha: fecha,
-        
-      );
-
-      // Agregar el producto al provider
-      Provider.of<MapeoPreciosProvider>(context, listen: false)
-          .addProducto(producto);
-
-      // Debug: Imprimir valores para verificar que se asignaron correctamente
-      print("Producto agregado: $producto");
-
-      // Debug: Ver los datos que se van a enviar
-      print("Datos antes de enviar al backend: $formData");
-
-      formData['marca'] = _marcaId; // Enviar el ID, no el nombre
-      formData['categoria'] = _categoriaId;
-      formData['zona'] = _zonaId;
-      formData['region'] = _regionId;
-
-      // Debug: Ver cómo se ven los datos de relaciones
-      print("Marca (ID): ${formData['marca']}");
-      print("Categoría (ID): ${formData['categoria']}");
-      print("Zona (ID): ${formData['zona']}");
-      print("Región (ID): ${formData['region']}");
-
-      // Convertir precio a número
-      formData['precio'] =
-          double.tryParse(formData['precio'].toString()) ?? 0.0;
-
-      // Debug: Ver el precio
-      print("Precio: ${formData['precio']}");
-
-      // Preparar datos de la imagen si existe
-      FormData requestData = FormData.fromMap(formData);
-      if (_productImage != null) {
-        requestData.files.add(
-          MapEntry(
-            "foto", // Asegúrate de que esta clave sea la correcta en tu backend
-            await MultipartFile.fromFile(
-              _productImage!.path,
-              filename: "producto.jpg",
-            ),
-          ),
-        );
-        // Debug: Ver la imagen que se adjunta
-        print("Imagen añadida: ${_productImage?.path}");
-      }
-
-      try {
-        // Enviar la solicitud al backend Django
-        final response = await widget.dio.post(
-          'http://$ip:8000/api/Productos/',
-          data: requestData,
-          options: Options(headers: {'Content-Type': 'multipart/form-data'}),
-        );
-
-        // Debug: Ver la respuesta del servidor
-        print("Respuesta del servidor: ${response.statusCode}");
-
-        if (response.statusCode == 201 || response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Formulario enviado con éxito')),
-          );
-          Navigator.pop(context);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al enviar formulario')),
-          );
-        }
-      } catch (e) {
-        if (e is DioException) {
-          // Manejo más específico de errores de Dio
-          debugPrint("Error de conexión: ${e.response?.data ?? e.message}");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Error de conexión: ${e.response?.data ?? e.message}')),
-          );
-        } else {
-          debugPrint("Error desconocido: $e");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error desconocido: $e')),
-          );
-        }
-      }
-    } else {
-      print("Formulario no válido");
-    }
-  }
 
   Future<void> _pickImage() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
-      setState(() {
-        _productImage = File(pickedFile.path);
-      });
-      print(
-          "Imagen seleccionada: ${_productImage?.path}"); // Ver la imagen seleccionada
+      File newImage = File(pickedFile.path);
+
+      if (mounted) {
+          _productImage = newImage;
+      }
+      logger.i('Imagen Seleccionada :${_productImage?.path}');
     } else {
-      print("No se seleccionó ninguna imagen");
+      logger.i('No se selecciono ninguna Imagen');
     }
   }
+///////////////////////////////////////////////
+
 
   @override
   Widget build(BuildContext context) {
+    formularioProvider = Provider.of<FormularioProvider>(context, listen: false);
+
     return AlertDialog(
       title: Text('Formulario de Registro'),
       content: SingleChildScrollView(
@@ -324,136 +88,155 @@ class _FormDialogState extends State<FormDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Autocomplete<Map<String, dynamic>>(
-                optionsBuilder: (TextEditingValue textEditingValue) async {
-                  if (textEditingValue.text == '') {
-                    return [];
-                  } else {
-                    return await _fetchProductos(textEditingValue.text);
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                if (textEditingValue.text == '') {
+                  return [];
+                } else {
+                  return await _mapeoService.fetchProductos(textEditingValue.text);
+                }
+              }, displayStringForOption: (Map<String, dynamic> option) {
+                return option['nombre_producto'];
+              }, fieldViewBuilder: (BuildContext context,
+                      TextEditingController textEditingController,
+                      FocusNode focusNode,
+                      VoidCallback onFieldSubmitted) {
+                return FormBuilderTextField(
+                  name: 'nombre_producto',
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                      labelText: 'Nombre del producto',
+                      suffixIcon: Icon(Icons.local_grocery_store_outlined)),
+                  validator: FormBuilderValidators.required(
+                  errorText: 'El producto es requerido'),
+                );
+              }, onSelected: (Map<String, dynamic> selection) async {
+                // Actualizamos el texto de los controladores en formularioProvider
+                formularioProvider.controllers['nombreProducto']!.text = selection['nombre_producto'];
+                
+                String marcaId = selection['marca']?.toString() ?? '';
+                String categoriaId = selection['categoria']?.toString() ?? '';
+
+                // Variables temporales para guardar los valores de nombre de marca y categoría
+                String? marcaName = '';
+                String? categoriaName = '';
+
+                try {
+                  // Solo hacer la llamada si el valor del ID no está vacío
+                  if (marcaId.isNotEmpty) {
+                    marcaName = await _mapeoService.getMarcaNombre(marcaId);
                   }
-                },
-                displayStringForOption: (Map<String, dynamic> option) {
-                  return option['nombre_producto'];
-                },
-                fieldViewBuilder: (BuildContext context,
-                    TextEditingController textEditingController,
-                    FocusNode focusNode,
-                    VoidCallback onFieldSubmitted) {
-                  return FormBuilderTextField(
-                    name: 'nombre_producto',
-                    controller: textEditingController,
-                    focusNode: focusNode,
-                    decoration: InputDecoration(
-                        labelText: 'Nombre del producto',
-                        suffixIcon: Icon(Icons.local_grocery_store_outlined)),
-                    validator: FormBuilderValidators.required(
-                        errorText: 'El producto es requerido'),
-                  );
-                },
-                onSelected: (Map<String, dynamic> selection) {
-                  _productoController.text = selection['nombre_producto'];
 
-                  setState(() {
-                    _marcaId =
-                        selection['marca']?.toString(); // Guarda el ID real
-                    _categoriaId = selection['categoria']?.toString();
-                  });
+                  if (categoriaId.isNotEmpty) {
+                    categoriaName =
+                        await _mapeoService.getCategoriaName(categoriaId);
+                  }
+                } catch (e) {
+                  logger.e('Error obteniendo datos: $e');
+                }
 
-                  _getMarcaNombre(selection['marca']?.toString() ?? '')
-                      .then((marcaName) {
-                    if (marcaName.isNotEmpty) {
-                      setState(() {
-                        _marcaController.text =
-                            marcaName; // Muestra el nombre pero usa el ID
-                      });
+                // Evitar el setState si los valores no cambiaron
+                if (mounted && (marcaName != null || categoriaName != null)) {
+
+                    // Actualizamos 'selectedValues' solo si el valor no es nulo o vacío
+                    if (marcaName != null && marcaName.isNotEmpty) {
+                      formularioProvider.updateSelectedValue('marca', selection['marca']?.toString());
+                      formularioProvider.controllers['marca']!.text = marcaName;
                     }
-                  });
 
-                  _getCategoriaName(selection['categoria']?.toString() ?? '')
-                      .then((categoriaName) {
-                    if (categoriaName.isNotEmpty) {
-                      setState(() {
-                        _categoriaController.text = categoriaName;
-                      });
+                    if (categoriaName != null && categoriaName.isNotEmpty) {
+                      formularioProvider.updateSelectedValue('categoria', selection['categoria']?.toString());
+                      formularioProvider.controllers['categoria']!.text = categoriaName;
                     }
-                  });
-                },
-              ),
+                }
+              }),
               FormBuilderTextField(
                 name: 'marca',
-                controller: _marcaController,
+                controller: formularioProvider.controllers['marca'],
                 decoration: InputDecoration(labelText: 'Marca'),
                 enabled: false,
               ),
               FormBuilderTextField(
                 name: 'categoria',
-                controller: _categoriaController,
+                controller: formularioProvider.controllers['categoria'],
                 decoration: InputDecoration(labelText: 'Categoría'),
                 enabled: false,
               ),
               Autocomplete<Map<String, dynamic>>(
-                optionsBuilder: (TextEditingValue textEditingValue) async {
-                  if (textEditingValue.text == '') {
-                    return [];
-                  } else {
-                    return await _fetchEstablecimientos(textEditingValue.text);
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                if (textEditingValue.text == '') {
+                  return [];
+                } else {
+                  return await _mapeoService.fetchEstablecimientos(textEditingValue.text);
+                }
+              }, displayStringForOption: (Map<String, dynamic> option) {
+                return option['nombre_cliente'];
+              }, fieldViewBuilder: (BuildContext context,
+                      TextEditingController textEditingController,
+                      FocusNode focusNode,
+                      VoidCallback onFieldSubmitted) {
+                return FormBuilderTextField(
+                  name: 'establecimiento',
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    labelText: 'Establecimiento',
+                    suffixIcon: Icon(Icons.shopping_bag_outlined),
+                  ),
+                  validator: FormBuilderValidators.required(
+                  errorText: 'El establecimiento es requerido'),
+                );
+              }, onSelected: (Map<String, dynamic> selection) async {
+                // Actualizamos el texto de los controladores en formularioProvider
+                formularioProvider.controllers['establecimiento']!.text = selection['nombre_cliente']; // Manejar null para establecimiento
+
+                String zonaId = selection['zona']?.toString() ?? '';
+                String regionId = selection['region']?.toString() ?? '';
+
+                // Variables temporales para almacenar los nombres de zona y región
+                String? zonaName;
+                String? regionName;
+
+                try {
+                  // Solo hacer las llamadas si los IDs no están vacíos
+                  if (zonaId.isNotEmpty) {
+                    zonaName = await _mapeoService.getZonaName(zonaId);
                   }
-                },
-                displayStringForOption: (Map<String, dynamic> option) {
-                  return option['nombre_cliente'];
-                },
-                fieldViewBuilder: (BuildContext context,
-                    TextEditingController textEditingController,
-                    FocusNode focusNode,
-                    VoidCallback onFieldSubmitted) {
-                  return FormBuilderTextField(
-                    name: 'establecimiento',
-                    controller: textEditingController,
-                    focusNode: focusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Establecimiento',
-                      suffixIcon: Icon(Icons.shopping_bag_outlined),
-                    ),
-                    validator: FormBuilderValidators.required(
-                        errorText: 'El establecimiento es requerido'),
-                  );
-                },
-                onSelected: (Map<String, dynamic> selection) {
-                  _establecimientoController.text =
-                      selection['nombre_cliente'] ?? '';
 
-                  setState(() {
-                    _zonaId = selection['zona']?.toString();
-                    _regionId = selection['region']?.toString();
-                  });
+                  if (regionId.isNotEmpty) {
+                    regionName = await _mapeoService.getRegionName(regionId);
+                  }
+                } catch (e) {
+                  logger.e('Error al obtener datos: $e');
+                }
 
-                  _getZonaName(selection['zona']?.toString() ?? '')
-                      .then((zonaName) {
-                    if (zonaName.isNotEmpty) {
-                      setState(() {
-                        _zonaController.text = zonaName;
-                      });
+                // Evitar setState si no es necesario
+                if (mounted && (zonaName != null || regionName != null)) {
+                    // Actualizamos 'selectedValues' solo si los valores son válidos
+                    if (zonaName != null && zonaName.isNotEmpty) {
+                      formularioProvider.updateSelectedValue('zona', selection['zona']?.toString() ?? '');
+                      formularioProvider.controllers['zona']!.text = zonaName;
+                    } else {
+                      formularioProvider.controllers['zona']!.text = ''; // Asignar valor vacío si es null
                     }
-                  });
 
-                  _getRegionName(selection['region']?.toString() ?? '')
-                      .then((regionName) {
-                    if (regionName.isNotEmpty) {
-                      setState(() {
-                        _regionController.text = regionName;
-                      });
+                    if (regionName != null && regionName.isNotEmpty) {
+                      formularioProvider.updateSelectedValue('region', selection['region']?.toString() ?? '');
+                      formularioProvider.controllers['region']!.text = regionName;
+                    } else {
+                      formularioProvider.controllers['region']!.text = ''; // Asignar valor vacío si es null
                     }
-                  });
-                },
-              ),
+                }
+              }),
               FormBuilderTextField(
                 name: 'zona',
-                controller: _zonaController,
+                controller: formularioProvider.controllers['zona'],
                 decoration: InputDecoration(labelText: 'Zona'),
                 enabled: false,
               ),
               FormBuilderTextField(
                 name: 'region',
-                controller: _regionController,
+                controller: formularioProvider.controllers['region'],
                 decoration: InputDecoration(labelText: 'Región'),
                 enabled: false,
               ),
@@ -467,20 +250,24 @@ class _FormDialogState extends State<FormDialog> {
                         DropdownMenuItem(value: unidad, child: Text(unidad)))
                     .toList(),
                 validator: FormBuilderValidators.required(
-                    errorText: 'La unidad es requerida'),
+                errorText: 'La unidad es requerida'),
+                onChanged: (value) {
+                formularioProvider.updateSelectedValue('unidad', value);
+                },
               ),
               FormBuilderTextField(
                 name: 'gramaje',
+                controller: formularioProvider.controllers['gramaje'],
                 decoration: InputDecoration(
                   labelText: 'Gramaje',
                   suffixIcon: Icon(Icons.balance),
                 ),
                 validator: FormBuilderValidators.required(
-                    errorText: 'El gramaje es requerido'),
+                errorText: 'El gramaje es requerido'),
               ),
               FormBuilderTextField(
                 name: 'precio',
-                controller: _precioController,
+                controller: formularioProvider.controllers['precio'],
                 decoration: InputDecoration(
                     labelText: 'Precio',
                     suffixIcon: Icon(Icons.monetization_on_outlined)),
@@ -499,22 +286,22 @@ class _FormDialogState extends State<FormDialog> {
               ),
               FormBuilderDateTimePicker(
                 name: 'fecha',
+                controller: formularioProvider.controllers['fecha'],
                 inputType: InputType.date,
                 format: DateFormat('dd/MM/yyyy'),
                 decoration: InputDecoration(
-                  labelText: 'Fecha de registro',
-                  suffixIcon: Icon(Icons.calendar_today),
+                labelText: 'Fecha de registro',
+                suffixIcon: Icon(Icons.calendar_today),
                 ),
                 initialValue: DateTime.now(),
                 firstDate: DateTime.now(),
                 lastDate: DateTime.now(),
                 validator: FormBuilderValidators.required(
-                    errorText: 'La fecha es requerida'),
+                errorText: 'La fecha es requerida'),
                 enabled: false,
               ),
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Centra los elementos en el Row
+                mainAxisAlignment: MainAxisAlignment.center, // Centra los elementos en el Row
                 children: [
                   // Si ya se ha tomado una foto, mostramos la imagen
                   if (_productImage != null)
@@ -528,27 +315,18 @@ class _FormDialogState extends State<FormDialog> {
                       ),
                     ),
                   // Si no hay foto, mostramos el ícono para tomar la foto
-                  if (_productImage ==
-                      null) // Solo mostrar el ícono si no hay imagen
+                  if (_productImage == null) // Solo mostrar el ícono si no hay imagen
                     Center(
                       child: Container(
                         margin: EdgeInsets.all(20),
-                        padding: const EdgeInsets.all(
-                            15), // Espaciado alrededor del ícono
+                        padding: const EdgeInsets.all(15), // Espaciado alrededor del ícono
                         decoration: BoxDecoration(
-                          shape:
-                              BoxShape.circle, // Hace que el fondo sea circular
-                          color: Colors.orange[
-                              200], // Fondo gris claro para resaltar el ícono
+                          shape:BoxShape.circle, // Hace que el fondo sea circular
+                          color: Colors.orange[200], // Fondo gris claro para resaltar el ícono
                         ),
                         child: IconButton(
-                          icon: Icon(
-                            Icons.camera_alt,
-                            size: 40, // Aumenta el tamaño del ícono
-                          ),
-                          onPressed:
-                              _pickImage, // Llama al método _pickImage para tomar la foto
-                        ),
+                          icon: Icon(Icons.camera_alt, size: 40), // Aumenta el tamaño del ícono
+                          onPressed:_pickImage) // Llama al método _pickImage para tomar la foto
                       ),
                     ),
                 ],
@@ -560,7 +338,10 @@ class _FormDialogState extends State<FormDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context), child: Text('Cancelar')),
-        ElevatedButton(onPressed: _submitForm, child: Text('Enviar')),
+        ElevatedButton(
+          onPressed: _handleFormSubmission,
+          child: Text('Enviar'),
+        ),
       ],
     );
   }

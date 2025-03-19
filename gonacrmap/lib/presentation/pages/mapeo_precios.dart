@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:gonacrmap/domain/services/navbar_service.dart';
 import 'package:gonacrmap/presentation/widgets/customdrawer.dart';
 import 'package:gonacrmap/presentation/widgets/profile_icon.dart';
-import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
-import 'package:expansion_tile_card/expansion_tile_card.dart'; 
+import 'package:expansion_tile_card/expansion_tile_card.dart';
 import '../widgets/form_dialog.dart';
 import '../providers/mapeo_precios_provider.dart';
 
+
 class MapeoPrecios extends StatelessWidget {
   void _showFormDialog(BuildContext context) {
-    final Dio dio = Dio();
+    
     showDialog(
       context: context,
-      builder: (context) => FormDialog(dio: dio),
+      builder: (context) => FormDialog(),
     );
   }
 
@@ -59,26 +59,41 @@ class MapeoPrecios extends StatelessWidget {
             margin: const EdgeInsets.all(15),
             child: Column(
               children: [
-                TextButton(
-                  style: ButtonStyle(
-                    foregroundColor:
-                        WidgetStateProperty.all<Color>(Colors.white),
-                    backgroundColor:
-                        WidgetStateProperty.all<Color>(Colors.purple),
+                Container(
+                  margin: const EdgeInsets.all(14.0),
+                  child: TextButton(
+                    style: ButtonStyle(
+                      foregroundColor:
+                          WidgetStateProperty.all<Color>(Colors.white),
+                      backgroundColor:
+                          WidgetStateProperty.all<Color>(Colors.purple),
+                    ),
+                    onPressed: () => _showFormDialog(context),
+                    child: const Text("Mapear Precio"),
                   ),
-                  onPressed: () => _showFormDialog(context),
-                  child: const Text("Mapear Precio"),
                 ),
                 Expanded(
                   child: ListView.builder(
                     itemCount: provider.productos.length,
                     itemBuilder: (context, index) {
                       final producto = provider.productos[index];
+
                       return ExpansionTileCard(
                         elevation: 2,
                         title: Text(producto.nombreProducto),
                         subtitle: Text('Precio: \$${producto.precio}'),
                         children: [
+                          if (producto.foto.isNotEmpty)
+                            Image.network(
+                              producto.foto,
+                              height: 150,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.broken_image,
+                                    size: 100, color: Colors.grey);
+                              },
+                            ),
                           ListTile(
                             title: Text('Marca: ${producto.marca}'),
                           ),
@@ -86,7 +101,8 @@ class MapeoPrecios extends StatelessWidget {
                             title: Text('Categoría: ${producto.categoria}'),
                           ),
                           ListTile(
-                            title: Text('Establecimiento: ${producto.establecimiento}'),
+                            title: Text(
+                                'Establecimiento: ${producto.establecimiento}'),
                           ),
                           ListTile(
                             title: Text('Zona: ${producto.zona}'),
@@ -95,7 +111,7 @@ class MapeoPrecios extends StatelessWidget {
                             title: Text('Región: ${producto.region}'),
                           ),
                           ListTile(
-                            title: Text('Unidad de medida: ${producto.unidadMedida}'),
+                            title: Text('Unidad de medida: ${producto.unidad}'),
                           ),
                           ListTile(
                             title: Text('Fecha: ${producto.fecha.toLocal()}'),

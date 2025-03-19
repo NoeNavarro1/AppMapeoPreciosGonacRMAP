@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:gonacrmap/domain/entities/producto.dart';
+import 'package:gonacrmap/data/models/producto_model.dart';
+
 
 class MapeoPreciosProvider extends ChangeNotifier {
-  List<Producto> _productos = [];
+  List<ProductoModel> _productos = [];
 
-  List<Producto> get productos => _productos;
+  List<ProductoModel> get productos => _productos;
 
-  void addProducto(Producto producto) {
+  void setProductos(List<ProductoModel> nuevosProductos) {
+    _productos = nuevosProductos;
+    notifyListeners();
+  }
+
+  void addProducto(ProductoModel producto) {
     _productos.add(producto);
     notifyListeners();
   }
