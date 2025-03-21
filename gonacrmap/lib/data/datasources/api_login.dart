@@ -1,10 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gonacrmap/presentation/providers/user_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'api_service.dart';
 
 class AuthService {
+
+  final logger = Logger();
+
   final ApiService _apiService = ApiService();
 
   // Función de login, que hace la solicitud a la API para autenticar al usuario
@@ -24,15 +28,15 @@ class AuthService {
       if (response['mensaje'] == 'Inicio de sesión exitoso') {
         // Actualizar el nombre del usuario en el UserProvider
         Provider.of<UserProvider>(context, listen: false).setUsername(response['usuario']);
-        print("Inicio de sesión exitoso, datos de usuario: $data");
+        logger.i("Inicio de sesión exitoso, datos de usuario: $data");
       }
 
       // Retornar la respuesta si es exitosa
       return response;
     } catch (e) {
       // Manejo de errores si la solicitud falla
-      print("Error al realizar el login: $e");
-      throw Exception("Error al realizar el login");
+      logger.e("Error al realizar el login: $e");
+      throw ("Error al realizar el login");
     }
   }
 }

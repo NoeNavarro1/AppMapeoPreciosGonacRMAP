@@ -20,17 +20,19 @@ class FormularioService {
 
     String nombreProducto = formularioProvider.controllers['nombreProducto']?.text ?? '';
     String establecimiento = formularioProvider.controllers['establecimiento']?.text ?? '';
+    String precio = formularioProvider.controllers['precio']?.text ?? '';
+    String gramaje = formularioProvider.controllers['gramaje']?.text ?? '';
 
     return ProductoModel(
       nombreProducto: nombreProducto,
-      marca: formularioProvider.selectedValues['marca'] ?? '0',
-      categoria: formularioProvider.selectedValues['categoria'] ?? '0',
+      marca: formularioProvider.selectedValues['marca'] ?? '',
+      categoria: formularioProvider.selectedValues['categoria'] ?? '',
       establecimiento: establecimiento,
-      zona: formularioProvider.selectedValues['zona'] ?? '0',
-      region: formularioProvider.selectedValues['region'] ?? '0', 
-      unidad: formularioProvider.selectedValues['unidad'] ?? '0', 
-      gramaje: formularioProvider.selectedValues['gramaje'] ?? '0',
-      precio: double.tryParse(formularioProvider.selectedValues['precio'] ?? '0') ?? 0.0,
+      zona: formularioProvider.selectedValues['zona'] ?? '',
+      region: formularioProvider.selectedValues['region'] ?? '', 
+      unidad: formularioProvider.selectedValues['unidad'] ?? '', 
+      gramaje: gramaje,
+      precio: double.tryParse(precio) ?? 0.0,
       fecha: DateTime.tryParse(formularioProvider.selectedValues['fecha'] ?? '') ?? DateTime.now(),
       foto: '',
     );

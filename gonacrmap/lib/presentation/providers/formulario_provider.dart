@@ -9,7 +9,7 @@ class FormularioProvider extends ChangeNotifier {
     'establecimiento': TextEditingController(),
     'zona': TextEditingController(),
     'region': TextEditingController(),
-    'gramage': TextEditingController(),
+    'gramaje': TextEditingController(),
     'unidad': TextEditingController(),
     'precio': TextEditingController(),
     'fecha': TextEditingController(),
@@ -22,6 +22,7 @@ class FormularioProvider extends ChangeNotifier {
     'zona': '',
     'region': '',
     'unidad': '',
+    'gramaje': '',
   };
 
   void updateSelectedValue(String key, String? value) {

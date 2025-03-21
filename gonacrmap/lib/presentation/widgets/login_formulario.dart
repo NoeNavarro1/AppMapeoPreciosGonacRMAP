@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gonacrmap/data/datasources/api_login.dart';
-import 'package:gonacrmap/presentation/pages/navegacion.dart';
+import 'package:gonacrmap/presentation/widgets/navegacion.dart';
 import 'package:gonacrmap/presentation/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 

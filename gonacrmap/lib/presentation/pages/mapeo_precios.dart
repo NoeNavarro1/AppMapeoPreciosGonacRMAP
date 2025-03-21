@@ -26,12 +26,13 @@ class MapeoPrecios extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.purple,
+        centerTitle: true,
         title: const Text(
           "Mapeo de precios",
           style: TextStyle(
             color: Colors.white,
             fontSize: 17,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
           ),
         ),
         titleSpacing: 0,
@@ -61,16 +62,15 @@ class MapeoPrecios extends StatelessWidget {
               children: [
                 Container(
                   margin: const EdgeInsets.all(14.0),
-                  child: TextButton(
-                    style: ButtonStyle(
-                      foregroundColor:
-                          WidgetStateProperty.all<Color>(Colors.white),
-                      backgroundColor:
-                          WidgetStateProperty.all<Color>(Colors.purple),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: () => _showFormDialog(context),
-                    child: const Text("Mapear Precio"),
-                  ),
+                    child: const Text('Mapear Producto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                  )
                 ),
                 Expanded(
                   child: ListView.builder(
@@ -80,19 +80,22 @@ class MapeoPrecios extends StatelessWidget {
 
                       return ExpansionTileCard(
                         elevation: 2,
-                        title: Text(producto.nombreProducto),
-                        subtitle: Text('Precio: \$${producto.precio}'),
+                        borderRadius: BorderRadius.circular(12),
+                        title: Text(producto.nombreProducto, style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('Precio: \$${producto.precio}', style:  TextStyle(color:  Colors.green, fontWeight: FontWeight.w500)
+                        ),
+                        leading: Icon(Icons.shopping_cart, color: Colors.purple,),
+                        trailing: Icon(Icons.expand_more, color: Colors.purple),
                         children: [
                           if (producto.foto.isNotEmpty)
-                            Image.network(
-                              producto.foto,
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.broken_image,
-                                    size: 100, color: Colors.grey);
-                              },
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                producto.foto,
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ListTile(
                             title: Text('Marca: ${producto.marca}'),
@@ -112,6 +115,9 @@ class MapeoPrecios extends StatelessWidget {
                           ),
                           ListTile(
                             title: Text('Unidad de medida: ${producto.unidad}'),
+                          ),
+                          ListTile(
+                            title: Text('Gramaje: ${producto.gramaje}'),
                           ),
                           ListTile(
                             title: Text('Fecha: ${producto.fecha.toLocal()}'),

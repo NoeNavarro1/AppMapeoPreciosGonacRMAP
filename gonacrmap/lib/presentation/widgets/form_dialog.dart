@@ -31,53 +31,113 @@ class _FormDialogState extends State<FormDialog> {
   final logger = Logger();
   late FormularioProvider formularioProvider;
 
-
 ////////////////////////////////////////////////
   Future<void> _handleFormSubmission() async {
-    // Obtener el producto desde los controladores
-    ProductoModel producto = _formularioService.getProductoFromControllers(context);
+    if (_formKey.currentState?.saveAndValidate() ?? false) {
+      // Obtener el producto desde los controladores
+      ProductoModel producto =_formularioService.getProductoFromControllers(context);
 
-    // Ruta de la imagen (si es necesario)
-    String? imagePath =
-        _productImage?.path; // Cambia esto según tu implementación
+      // Ruta de la imagen (si es necesario)
+      String? imagePath = _productImage?.path;
 
-    // Llamar a submitForm con el producto y la imagen
-    bool result = await _formularioService.submitForm(context, producto, imagePath);
+      // Llamar a submitForm con el producto y la imagen
+      bool result = await _formularioService.submitForm(context, producto, imagePath);
 
-    if (result) {
-      logger.i('Formulario Enviado Correctamente');
+      if (result) {
+        logger.i('Formulario Enviado Correctamente');
+        if (mounted) {
+          Navigator.pop(
+              context); // Cerrar el AlertDialog solo si el envío fue exitoso
+          // Mostrar una alerta o mensaje de éxito
+          _showSuccessDialog();
+        }
+      } else {
+        logger.e('Error al enviar el formulario');
+        // Mostrar un SnackBar con el mensaje de error
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text('Error al enviar el formulario, intenta nuevamente')));
+        // Mostrar una alerta de error
+        _showErrorDialog();
+      }
     } else {
-      logger.e('Error al enviar el formulario');
+      logger.e('El formulario no es válido');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Por favor, completa todos los campos requeridos')));
     }
   }
-///////////////////////////////////////////////
 
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('¡Formulario Enviado!'),
+          content: Text('El formulario se ha enviado exitosamente.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo de éxito
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(
+              'Hubo un error al enviar el formulario. Por favor, inténtalo de nuevo.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo de error
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+///////////////////////////////////////////////
 
 ///////////////////////////////////////////////
   final ImagePicker _picker = ImagePicker();
   File? _productImage;
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.camera);
+    final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80);
 
     if (pickedFile != null) {
-      File newImage = File(pickedFile.path);
+      setState(() {
+        _productImage =
+            File(pickedFile.path); // Se usa setState para actualizar la UI
+      });
 
-      if (mounted) {
-          _productImage = newImage;
-      }
-      logger.i('Imagen Seleccionada :${_productImage?.path}');
+      logger.i('Imagen Seleccionada: ${_productImage?.path}');
     } else {
-      logger.i('No se selecciono ninguna Imagen');
+      logger.e('No se seleccionó ninguna imagen');
     }
   }
 ///////////////////////////////////////////////
 
-
   @override
   Widget build(BuildContext context) {
-    formularioProvider = Provider.of<FormularioProvider>(context, listen: false);
+    formularioProvider =
+        Provider.of<FormularioProvider>(context, listen: false);
 
     return AlertDialog(
       title: Text('Formulario de Registro'),
@@ -92,7 +152,8 @@ class _FormDialogState extends State<FormDialog> {
                 if (textEditingValue.text == '') {
                   return [];
                 } else {
-                  return await _mapeoService.fetchProductos(textEditingValue.text);
+                  return await _mapeoService
+                      .fetchProductos(textEditingValue.text);
                 }
               }, displayStringForOption: (Map<String, dynamic> option) {
                 return option['nombre_producto'];
@@ -108,12 +169,13 @@ class _FormDialogState extends State<FormDialog> {
                       labelText: 'Nombre del producto',
                       suffixIcon: Icon(Icons.local_grocery_store_outlined)),
                   validator: FormBuilderValidators.required(
-                  errorText: 'El producto es requerido'),
+                      errorText: 'El producto es requerido'),
                 );
               }, onSelected: (Map<String, dynamic> selection) async {
                 // Actualizamos el texto de los controladores en formularioProvider
-                formularioProvider.controllers['nombreProducto']!.text = selection['nombre_producto'];
-                
+                formularioProvider.controllers['nombreProducto']!.text =
+                    selection['nombre_producto'];
+
                 String marcaId = selection['marca']?.toString() ?? '';
                 String categoriaId = selection['categoria']?.toString() ?? '';
 
@@ -137,17 +199,19 @@ class _FormDialogState extends State<FormDialog> {
 
                 // Evitar el setState si los valores no cambiaron
                 if (mounted && (marcaName != null || categoriaName != null)) {
+                  // Actualizamos 'selectedValues' solo si el valor no es nulo o vacío
+                  if (marcaName != null && marcaName.isNotEmpty) {
+                    formularioProvider.updateSelectedValue(
+                        'marca', selection['marca']?.toString());
+                    formularioProvider.controllers['marca']!.text = marcaName;
+                  }
 
-                    // Actualizamos 'selectedValues' solo si el valor no es nulo o vacío
-                    if (marcaName != null && marcaName.isNotEmpty) {
-                      formularioProvider.updateSelectedValue('marca', selection['marca']?.toString());
-                      formularioProvider.controllers['marca']!.text = marcaName;
-                    }
-
-                    if (categoriaName != null && categoriaName.isNotEmpty) {
-                      formularioProvider.updateSelectedValue('categoria', selection['categoria']?.toString());
-                      formularioProvider.controllers['categoria']!.text = categoriaName;
-                    }
+                  if (categoriaName != null && categoriaName.isNotEmpty) {
+                    formularioProvider.updateSelectedValue(
+                        'categoria', selection['categoria']?.toString());
+                    formularioProvider.controllers['categoria']!.text =
+                        categoriaName;
+                  }
                 }
               }),
               FormBuilderTextField(
@@ -167,7 +231,8 @@ class _FormDialogState extends State<FormDialog> {
                 if (textEditingValue.text == '') {
                   return [];
                 } else {
-                  return await _mapeoService.fetchEstablecimientos(textEditingValue.text);
+                  return await _mapeoService
+                      .fetchEstablecimientos(textEditingValue.text);
                 }
               }, displayStringForOption: (Map<String, dynamic> option) {
                 return option['nombre_cliente'];
@@ -184,11 +249,13 @@ class _FormDialogState extends State<FormDialog> {
                     suffixIcon: Icon(Icons.shopping_bag_outlined),
                   ),
                   validator: FormBuilderValidators.required(
-                  errorText: 'El establecimiento es requerido'),
+                      errorText: 'El establecimiento es requerido'),
                 );
               }, onSelected: (Map<String, dynamic> selection) async {
                 // Actualizamos el texto de los controladores en formularioProvider
-                formularioProvider.controllers['establecimiento']!.text = selection['nombre_cliente']; // Manejar null para establecimiento
+                formularioProvider.controllers['establecimiento']!.text =
+                    selection[
+                        'nombre_cliente']; // Manejar null para establecimiento
 
                 String zonaId = selection['zona']?.toString() ?? '';
                 String regionId = selection['region']?.toString() ?? '';
@@ -212,20 +279,24 @@ class _FormDialogState extends State<FormDialog> {
 
                 // Evitar setState si no es necesario
                 if (mounted && (zonaName != null || regionName != null)) {
-                    // Actualizamos 'selectedValues' solo si los valores son válidos
-                    if (zonaName != null && zonaName.isNotEmpty) {
-                      formularioProvider.updateSelectedValue('zona', selection['zona']?.toString() ?? '');
-                      formularioProvider.controllers['zona']!.text = zonaName;
-                    } else {
-                      formularioProvider.controllers['zona']!.text = ''; // Asignar valor vacío si es null
-                    }
+                  // Actualizamos 'selectedValues' solo si los valores son válidos
+                  if (zonaName != null && zonaName.isNotEmpty) {
+                    formularioProvider.updateSelectedValue(
+                        'zona', selection['zona']?.toString() ?? '');
+                    formularioProvider.controllers['zona']!.text = zonaName;
+                  } else {
+                    formularioProvider.controllers['zona']!.text =
+                        ''; // Asignar valor vacío si es null
+                  }
 
-                    if (regionName != null && regionName.isNotEmpty) {
-                      formularioProvider.updateSelectedValue('region', selection['region']?.toString() ?? '');
-                      formularioProvider.controllers['region']!.text = regionName;
-                    } else {
-                      formularioProvider.controllers['region']!.text = ''; // Asignar valor vacío si es null
-                    }
+                  if (regionName != null && regionName.isNotEmpty) {
+                    formularioProvider.updateSelectedValue(
+                        'region', selection['region']?.toString() ?? '');
+                    formularioProvider.controllers['region']!.text = regionName;
+                  } else {
+                    formularioProvider.controllers['region']!.text =
+                        ''; // Asignar valor vacío si es null
+                  }
                 }
               }),
               FormBuilderTextField(
@@ -250,9 +321,9 @@ class _FormDialogState extends State<FormDialog> {
                         DropdownMenuItem(value: unidad, child: Text(unidad)))
                     .toList(),
                 validator: FormBuilderValidators.required(
-                errorText: 'La unidad es requerida'),
+                    errorText: 'La unidad es requerida'),
                 onChanged: (value) {
-                formularioProvider.updateSelectedValue('unidad', value);
+                  formularioProvider.updateSelectedValue('unidad', value);
                 },
               ),
               FormBuilderTextField(
@@ -263,7 +334,7 @@ class _FormDialogState extends State<FormDialog> {
                   suffixIcon: Icon(Icons.balance),
                 ),
                 validator: FormBuilderValidators.required(
-                errorText: 'El gramaje es requerido'),
+                    errorText: 'El gramaje es requerido'),
               ),
               FormBuilderTextField(
                 name: 'precio',
@@ -290,18 +361,19 @@ class _FormDialogState extends State<FormDialog> {
                 inputType: InputType.date,
                 format: DateFormat('dd/MM/yyyy'),
                 decoration: InputDecoration(
-                labelText: 'Fecha de registro',
-                suffixIcon: Icon(Icons.calendar_today),
+                  labelText: 'Fecha de registro',
+                  suffixIcon: Icon(Icons.calendar_today),
                 ),
                 initialValue: DateTime.now(),
                 firstDate: DateTime.now(),
                 lastDate: DateTime.now(),
                 validator: FormBuilderValidators.required(
-                errorText: 'La fecha es requerida'),
+                    errorText: 'La fecha es requerida'),
                 enabled: false,
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center, // Centra los elementos en el Row
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Centra los elementos en el Row
                 children: [
                   // Si ya se ha tomado una foto, mostramos la imagen
                   if (_productImage != null)
@@ -315,19 +387,25 @@ class _FormDialogState extends State<FormDialog> {
                       ),
                     ),
                   // Si no hay foto, mostramos el ícono para tomar la foto
-                  if (_productImage == null) // Solo mostrar el ícono si no hay imagen
+                  if (_productImage ==
+                      null) // Solo mostrar el ícono si no hay imagen
                     Center(
                       child: Container(
-                        margin: EdgeInsets.all(20),
-                        padding: const EdgeInsets.all(15), // Espaciado alrededor del ícono
-                        decoration: BoxDecoration(
-                          shape:BoxShape.circle, // Hace que el fondo sea circular
-                          color: Colors.orange[200], // Fondo gris claro para resaltar el ícono
-                        ),
-                        child: IconButton(
-                          icon: Icon(Icons.camera_alt, size: 40), // Aumenta el tamaño del ícono
-                          onPressed:_pickImage) // Llama al método _pickImage para tomar la foto
-                      ),
+                          margin: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(
+                              15), // Espaciado alrededor del ícono
+                          decoration: BoxDecoration(
+                            shape: BoxShape
+                                .circle, // Hace que el fondo sea circular
+                            color: Colors.orange[
+                                200], // Fondo gris claro para resaltar el ícono
+                          ),
+                          child: IconButton(
+                              icon: Icon(Icons.camera_alt,
+                                  size: 40), // Aumenta el tamaño del ícono
+                              onPressed:
+                                  _pickImage) // Llama al método _pickImage para tomar la foto
+                          ),
                     ),
                 ],
               ),
