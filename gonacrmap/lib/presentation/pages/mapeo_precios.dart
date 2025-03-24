@@ -10,7 +10,6 @@ import '../providers/mapeo_precios_provider.dart';
 
 class MapeoPrecios extends StatelessWidget {
   void _showFormDialog(BuildContext context) {
-    
     showDialog(
       context: context,
       builder: (context) => FormDialog(),
@@ -31,8 +30,9 @@ class MapeoPrecios extends StatelessWidget {
           "Mapeo de precios",
           style: TextStyle(
             color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w500,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
           ),
         ),
         titleSpacing: 0,
@@ -58,71 +58,91 @@ class MapeoPrecios extends StatelessWidget {
         builder: (context, provider, child) {
           return Container(
             margin: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Column(
               children: [
+                // Botón con animación de hover
                 Container(
-                  margin: const EdgeInsets.all(14.0),
+                  margin: const EdgeInsets.only(bottom: 16.0),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.purple,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 5,
                     ),
                     onPressed: () => _showFormDialog(context),
-                    child: const Text('Mapear Producto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-                  )
+                    child: const Text(
+                      'Mapear Producto',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: ListView.builder(
                     itemCount: provider.productos.length,
                     itemBuilder: (context, index) {
                       final producto = provider.productos[index];
-
-                      return ExpansionTileCard(
-                        elevation: 2,
-                        borderRadius: BorderRadius.circular(12),
-                        title: Text(producto.nombreProducto, style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Precio: \$${producto.precio}', style:  TextStyle(color:  Colors.green, fontWeight: FontWeight.w500)
+                      return Card(
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        leading: Icon(Icons.shopping_cart, color: Colors.purple,),
-                        trailing: Icon(Icons.expand_more, color: Colors.purple),
-                        children: [
-                          if (producto.foto.isNotEmpty)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                producto.foto,
-                                height: 150,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+                        margin: const EdgeInsets.only(bottom: 16.0),
+                        child: ExpansionTileCard(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(20),
+                          title: Text(
+                            producto.nombreProducto,
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          subtitle: Text(
+                            'Precio: \$${producto.precio}',
+                            style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+                          ),
+                          leading: Icon(Icons.shopping_cart, color: Colors.purple),
+                          trailing: Icon(Icons.expand_more, color: Colors.purple),
+                          children: [
+                            if (producto.foto.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  producto.foto,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
+                            ListTile(
+                              title: Text('Marca: ${producto.marca}'),
                             ),
-                          ListTile(
-                            title: Text('Marca: ${producto.marca}'),
-                          ),
-                          ListTile(
-                            title: Text('Categoría: ${producto.categoria}'),
-                          ),
-                          ListTile(
-                            title: Text(
-                                'Establecimiento: ${producto.establecimiento}'),
-                          ),
-                          ListTile(
-                            title: Text('Zona: ${producto.zona}'),
-                          ),
-                          ListTile(
-                            title: Text('Región: ${producto.region}'),
-                          ),
-                          ListTile(
-                            title: Text('Unidad de medida: ${producto.unidad}'),
-                          ),
-                          ListTile(
-                            title: Text('Gramaje: ${producto.gramaje}'),
-                          ),
-                          ListTile(
-                            title: Text('Fecha: ${producto.fecha.toLocal()}'),
-                          ),
-                        ],
+                            ListTile(
+                              title: Text('Categoría: ${producto.categoria}'),
+                            ),
+                            ListTile(
+                              title: Text('Establecimiento: ${producto.establecimiento}'),
+                            ),
+                            ListTile(
+                              title: Text('Zona: ${producto.zona}'),
+                            ),
+                            ListTile(
+                              title: Text('Región: ${producto.region}'),
+                            ),
+                            ListTile(
+                              title: Text('Unidad de medida: ${producto.unidad}'),
+                            ),
+                            ListTile(
+                              title: Text('Gramaje: ${producto.gramaje}'),
+                            ),
+                            ListTile(
+                              title: Text('Fecha: ${producto.fecha.toLocal()}'),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -135,3 +155,4 @@ class MapeoPrecios extends StatelessWidget {
     );
   }
 }
+

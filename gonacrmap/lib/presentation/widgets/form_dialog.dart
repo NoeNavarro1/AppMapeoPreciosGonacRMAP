@@ -31,6 +31,33 @@ class _FormDialogState extends State<FormDialog> {
   final logger = Logger();
   late FormularioProvider formularioProvider;
 
+////////////////////////////////////////////////////
+@override
+void dispose() {
+  // Solo limpia si el widget aún está montado
+  if (mounted) {
+    formularioProvider.controllers['nombreProducto']?.clear();
+    formularioProvider.controllers['marca']?.clear();
+    formularioProvider.controllers['categoria']?.clear();
+    formularioProvider.controllers['establecimiento']?.clear();
+    formularioProvider.controllers['zona']?.clear();
+    formularioProvider.controllers['region']?.clear();
+    formularioProvider.controllers['unidad']?.clear();
+    formularioProvider.controllers['gramaje']?.clear();
+    formularioProvider.controllers['precio']?.clear();
+    formularioProvider.controllers['fecha']?.clear();
+    
+    // Limpiar la imagen
+    setState(() {
+      _productImage = null;
+    });
+  }
+
+  super.dispose();
+}
+
+////////////////////////////////////////////////
+
 ////////////////////////////////////////////////
   Future<void> _handleFormSubmission() async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
