@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MapeoPreciosProvider()),
         ChangeNotifierProvider(create: (_) => FormularioProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
+        
       ],
        child: MaterialApp(
         home: Loginpage(),

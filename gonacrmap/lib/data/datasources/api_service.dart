@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: "http://10.11.20.84:8000/api/",
+    baseUrl: "http://10.11.20.74:8000/api/",
     headers: {
       'Content-Type': 'application/json', 
       'Accept': 'application/json',
